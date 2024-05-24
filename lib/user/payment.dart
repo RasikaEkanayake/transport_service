@@ -25,10 +25,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _expiryDateController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
+  final TextEditingController _nameOnCardController = TextEditingController();
+  bool _isProcessing = false;
 
   Future<void> confirmPayment() async {
+    setState(() {
+      _isProcessing = true;
+    });
+
     // Simulate network delay for payment processing
     await Future.delayed(Duration(seconds: 3));
+
     // Simulate successful payment
     await _firestore
         .collection('reserved_seats')
@@ -38,6 +45,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'user_name': widget.userName,
       'payment_amount': widget.totalCost,
     }, SetOptions(merge: true));
+
+    setState(() {
+      _isProcessing = false;
+    });
+
     Navigator.of(context)
         .pop(true); // Return true to indicate successful payment
   }
@@ -49,7 +61,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         title: Text('Payment'),
         backgroundColor: Colors.blue,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -59,13 +71,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                color: Colors.green,
               ),
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: _nameOnCardController,
+              decoration: InputDecoration(
+                labelText: 'Name on Card',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
+              keyboardType: TextInputType.name,
             ),
             SizedBox(height: 20),
             TextField(
               controller: _cardNumberController,
               decoration: InputDecoration(
                 labelText: 'Card Number',
+                prefixIcon: Icon(Icons.credit_card),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                 ),
@@ -73,45 +99,65 @@ class _PaymentScreenState extends State<PaymentScreen> {
               keyboardType: TextInputType.number,
             ),
             SizedBox(height: 20),
-            TextField(
-              controller: _expiryDateController,
-              decoration: InputDecoration(
-                labelText: 'Expiry Date (MM/YY)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _expiryDateController,
+                    decoration: InputDecoration(
+                      labelText: 'Expiry Date (MM/YY)',
+                      prefixIcon: Icon(Icons.calendar_today),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                    ),
+                    keyboardType: TextInputType.datetime,
+                  ),
                 ),
-              ),
-              keyboardType: TextInputType.datetime,
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _cvvController,
-              decoration: InputDecoration(
-                labelText: 'CVV',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
+                SizedBox(width: 20),
+                Expanded(
+                  child: TextField(
+                    controller: _cvvController,
+                    decoration: InputDecoration(
+                      labelText: 'CVV',
+                      prefixIcon: Icon(Icons.lock),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                    ),
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
-              ),
-              obscureText: true,
-              keyboardType: TextInputType.number,
+              ],
             ),
             SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                confirmPayment();
-              },
-              child: Text(
-                'Submit Payment',
-                style: TextStyle(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 24.0),
-                backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-              ),
-            ),
+            _isProcessing
+                ? CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: () {
+                      confirmPayment();
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.payment),
+                        SizedBox(width: 10),
+                        Text(
+                          'Submit Payment',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                          vertical: 14.0, horizontal: 24.0),
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                    ),
+                  ),
           ],
         ),
       ),

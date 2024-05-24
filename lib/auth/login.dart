@@ -67,6 +67,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _loginAsGuest() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => GuestHome()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,6 +177,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: TextDecoration.underline,
                             fontSize: 16.0,
                           ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _loginAsGuest,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 14.0, horizontal: 24.0),
+                          backgroundColor: Colors.grey,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                        ),
+                        child: Text(
+                          'Login as Guest',
+                          style: TextStyle(fontSize: 18.0, color: Colors.white),
                         ),
                       ),
                     ],
