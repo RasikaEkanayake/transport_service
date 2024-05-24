@@ -5,7 +5,7 @@ import 'package:transport_system/guest/guest_home.dart';
 import 'package:transport_system/driver/driver_home.dart';
 import 'package:transport_system/admin/admin_home.dart';
 import 'package:transport_system/user/user_home.dart';
-import 'package:transport_system/screens/dipot_home.dart';
+import 'package:transport_system/dipot/dipot_home.dart';
 import 'package:transport_system/auth/register_user.dart';
 import 'package:transport_system/auth/register_driver.dart';
 

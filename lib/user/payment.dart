@@ -36,15 +36,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Simulate network delay for payment processing
     await Future.delayed(Duration(seconds: 3));
 
-    // Simulate successful payment
+    // Update reserved seats in the 'reserved_seats' collection
     await _firestore
         .collection('reserved_seats')
         .doc('${widget.busNumber}-${widget.time}')
         .set({
       'seats': FieldValue.arrayUnion(widget.selectedSeats),
+    }, SetOptions(merge: true));
+
+    // Save payment information to the 'payments' collection
+    await _firestore.collection('payments').add({
       'user_name': widget.userName,
       'payment_amount': widget.totalCost,
-    }, SetOptions(merge: true));
+      'bus_number': widget.busNumber,
+      'time': widget.time,
+      'seats': widget.selectedSeats,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
 
     setState(() {
       _isProcessing = false;
@@ -135,9 +143,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _isProcessing
                 ? CircularProgressIndicator()
                 : ElevatedButton(
-                    onPressed: () {
-                      confirmPayment();
-                    },
+                    onPressed: confirmPayment,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
