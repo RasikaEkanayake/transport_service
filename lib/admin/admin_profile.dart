@@ -4,34 +4,38 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:transport_system/admin/add_bus_location.dart';
 import 'package:transport_system/admin/add_time_shedule.dart';
-import 'package:transport_system/admin/admin_profile.dart';
+import 'package:transport_system/admin/admin_home.dart';
 import 'package:transport_system/admin/gen_report.dart';
 import 'package:transport_system/constants.dart';
 
 import '../schedule.dart';
 
-class AdminHome extends StatefulWidget {
+class AdminProfile extends StatefulWidget {
   @override
-  _AdminHomeState createState() => _AdminHomeState();
+  _AdminProfileState createState() => _AdminProfileState();
 }
 
-class _AdminHomeState extends State<AdminHome> {
+class _AdminProfileState extends State<AdminProfile> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  int _selectedIndex = 0;
+  int _selectedIndex = 4;
 
-  Future<String> _getname() async {
+  Future<Map<String, dynamic>> _getUserData() async {
     User? user = _auth.currentUser;
     if (user != null) {
       DocumentSnapshot userDoc =
           await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists) {
         Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
-        String name = data?['name'] ?? '';
-        return name;
+        return {
+          'name': data?['name'] ?? '',
+          'firstName': data?['firstName'] ?? '',
+          'lastName': data?['lastName'] ?? '',
+          'email': user.email ?? ''
+        };
       }
     }
-    return '';
+    return {'name': '', 'firstName': '', 'lastName': '', 'email': ''};
   }
 
   void _onItemTapped(int index) {
@@ -64,7 +68,6 @@ class _AdminHomeState extends State<AdminHome> {
         );
         break;
       case 4:
-        // Handle Report navigation
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => AdminProfile()),
@@ -73,19 +76,79 @@ class _AdminHomeState extends State<AdminHome> {
     }
   }
 
+  void _logout() async {
+    await _auth.signOut();
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
+  }
+
+  void _changePassword(BuildContext context) {
+    final _passwordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Change Password'),
+        content: TextField(
+          controller: _passwordController,
+          decoration: InputDecoration(
+            labelText: 'New Password',
+          ),
+          obscureText: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              User? user = _auth.currentUser;
+              try {
+                if (user != null) {
+                  await user.updatePassword(_passwordController.text);
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Password changed successfully')),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            child: Text('Change'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kMoonStones,
-      body: FutureBuilder<String>(
-        future: _getname(),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _getUserData(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else {
-            String name = snapshot.data ?? 'User';
+            Map<String, dynamic> userData = snapshot.data ?? {};
+            String name = userData['name'] ?? 'User';
+            String firstName = userData['firstName'] ?? '';
+            String lastName = userData['lastName'] ?? '';
+            String email = userData['email'] ?? '';
             return Column(
               children: [
                 Padding(
@@ -111,6 +174,14 @@ class _AdminHomeState extends State<AdminHome> {
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 35.0,
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: _logout,
+                            child: Text('Logout',
+                                style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
                             ),
                           ),
                         ],
@@ -164,72 +235,17 @@ class _AdminHomeState extends State<AdminHome> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.push(context,
-                                            MaterialPageRoute(
-                                                builder: (context) {
-                                          return AddBusLocation();
-                                        }));
-                                      },
-                                      child: Text(
-                                        'Add Bus Location',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xFF2196F3),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 12),
-                                      ),
-                                    ),
+                                    Text('First Name: $firstName'),
+                                    Text('Last Name: $lastName'),
+                                    Text('Email: $email'),
                                     SizedBox(height: 16),
                                     ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.push(context,
-                                            MaterialPageRoute(
-                                                builder: (context) {
-                                          return AddTimeSchedule();
-                                        }));
-                                      },
-                                      child: Text(
-                                        'Add Time Schedule',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
+                                      onPressed: () => _changePassword(context),
+                                      child: Text('Change Password',
+                                          style:
+                                              TextStyle(color: Colors.white)),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFF2196F3),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 12),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.push(context,
-                                            MaterialPageRoute(
-                                                builder: (context) {
-                                          return GenerateReport();
-                                        }));
-                                      },
-                                      child: Text(
-                                        'Generate Report',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xFF2196F3),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 12),
                                       ),
                                     ),
                                   ],

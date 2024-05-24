@@ -7,6 +7,7 @@ import 'package:transport_system/admin/admin_home.dart';
 import 'package:transport_system/user/user_home.dart';
 import 'package:transport_system/screens/dipot_home.dart';
 import 'package:transport_system/auth/register_user.dart';
+import 'package:transport_system/auth/register_driver.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -146,6 +147,24 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         child: Text(
                           'Register as a new user',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                            fontSize: 16.0,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      RegisterDriverScreen()));
+                        },
+                        child: Text(
+                          'Register as a new driver',
                           style: TextStyle(
                             color: Colors.blue,
                             decoration: TextDecoration.underline,

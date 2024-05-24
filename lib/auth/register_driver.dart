@@ -3,19 +3,25 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:transport_system/auth/login.dart';
 
-class RegisterUserScreen extends StatefulWidget {
+class RegisterDriverScreen extends StatefulWidget {
   @override
-  _RegisterUserScreenState createState() => _RegisterUserScreenState();
+  _RegisterDriverScreenState createState() => _RegisterDriverScreenState();
 }
 
-class _RegisterUserScreenState extends State<RegisterUserScreen> {
+class _RegisterDriverScreenState extends State<RegisterDriverScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
+
+  String? _selectedBusNo;
+
+  Future<List<String>> _getBusNumbers() async {
+    QuerySnapshot snapshot = await _firestore.collection('bus_locations').get();
+    return snapshot.docs.map((doc) => doc['bus_number'] as String).toList();
+  }
 
   void _register() async {
     try {
@@ -29,15 +35,18 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
       if (user != null) {
         await _firestore.collection('users').doc(user.uid).set({
           'email': _emailController.text,
-          'name': _nameController.text,
+          'firstName': _firstNameController.text,
           'lastName': _lastNameController.text,
-          'address': _addressController.text,
-          'role': 'user',
+          'busNo': _selectedBusNo,
+          'role': 'driver',
         });
         Navigator.pop(context);
       }
     } catch (e) {
       print('Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration failed: ${e.toString()}')),
+      );
     }
   }
 
@@ -84,10 +93,10 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                 ),
                 SizedBox(height: 20),
                 TextField(
-                  controller: _nameController,
+                  controller: _firstNameController,
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.person),
-                    labelText: 'Name',
+                    labelText: 'First Name',
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.8),
                     border: OutlineInputBorder(
@@ -109,17 +118,36 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                   ),
                 ),
                 SizedBox(height: 20),
-                TextField(
-                  controller: _addressController,
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.home),
-                    labelText: 'Address',
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.8),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                  ),
+                FutureBuilder<List<String>>(
+                  future: _getBusNumbers(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return CircularProgressIndicator();
+                    }
+                    return DropdownButtonFormField<String>(
+                      value: _selectedBusNo,
+                      hint: Text('Select Bus Number'),
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.directions_bus),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedBusNo = value;
+                        });
+                      },
+                      items: snapshot.data!.map((busNo) {
+                        return DropdownMenuItem<String>(
+                          value: busNo,
+                          child: Text(busNo),
+                        );
+                      }).toList(),
+                    );
+                  },
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(

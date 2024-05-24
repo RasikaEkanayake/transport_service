@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:transport_system/admin/add_time_shedule.dart';
+import 'package:transport_system/admin/admin_profile.dart';
 import 'package:transport_system/admin/gen_report.dart';
 import 'package:transport_system/admin/admin_home.dart';
 
@@ -46,7 +47,7 @@ class _AddBusLocationState extends State<AddBusLocation> {
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => GenerateReport()),
+          MaterialPageRoute(builder: (context) => AdminProfile()),
         );
         break;
     }
